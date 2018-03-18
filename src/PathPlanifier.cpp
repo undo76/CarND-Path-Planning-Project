@@ -26,7 +26,7 @@ void PathPlanifier::selectLaneAndSpeed() {
   Car next = cars.nextCarInLane(car.s, car_lane);
 
   // If the car in front is far, continue at full speed
-  if (mod(next.s - car.s, CIRCUIT_LENGTH) > 60) {
+  if (mod(next.s - car.s, CIRCUIT_LENGTH) > 80) {
     target_speed = MAX_SPEED;
   } else {
     double best_cost = 999999;
@@ -36,16 +36,17 @@ void PathPlanifier::selectLaneAndSpeed() {
       if (lane_cost < best_cost) {
         bool safe = true;
         for (int i = l; i != car_lane; i += (car_lane > l) ? 1 : -1) {
-          if (!cars.isLaneSafe(car, i, 5, .1) ||
-              !cars.isLaneSafe(car, i, 10, .1) ||
-              !cars.isLaneSafe(car, i, 10, .5) ||
-              !cars.isLaneSafe(car, i, 10, 1) ||
-              !cars.isLaneSafe(car, i, 10, 2)) {
+          if (!cars.isLaneSafe(car, i, 7, .02) ||
+              !cars.isLaneSafe(car, i, 7, .1) ||
+              !cars.isLaneSafe(car, i, 7, .5) ||
+              !cars.isLaneSafe(car, i, 7, 1) ||
+              !cars.isLaneSafe(car, i, 7, 1.5) ||
+              !cars.isLaneSafe(car, i, 7, 2)) {
             safe = false;
             break;
           }
         }
-        if (safe) {
+        if (safe || target_lane == l) {
           best_cost = lane_cost;
           best_lane = l;
         }
@@ -56,13 +57,13 @@ void PathPlanifier::selectLaneAndSpeed() {
     Car next = cars.nextCarInLane(car.s, target_lane);
 
     if (mod(next.s - car.s, CIRCUIT_LENGTH) < 10) {
-      cout << "Hard breaking on line " << target_lane << endl;
+      cout << "Hard breaking on lane " << target_lane << endl;
       target_speed = next.speed - 10.;
-    } else if (mod(next.s - car.s, CIRCUIT_LENGTH) < 30) {
-      cout << "Soft breaking on line " << target_lane << endl;
-      target_speed = next.speed - 1.;
+    } else if (mod(next.s - car.s, CIRCUIT_LENGTH) < 40) {
+      cout << "Soft breaking on lane " << target_lane << endl;
+      target_speed = next.speed - 2.;
     } else {
-      cout << "Max speed on line " << target_lane << endl;
+      cout << "Max speed on lane " << target_lane << endl;
       target_speed = MAX_SPEED;
     }
 
