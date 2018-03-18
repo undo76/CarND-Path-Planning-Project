@@ -22,62 +22,51 @@ PathPlanifier::update(const Car &car, const Path &previous_path,
 }
 
 void PathPlanifier::selectLaneAndSpeed() {
-  double s = car.s;
-
-  Car selected = cars.nextCarInLane(s, target_lane);
+  int car_lane = d_to_lane(car.d);
+  Car next = cars.nextCarInLane(car.s, car_lane);
 
   // If the car in front is far, continue at full speed
-  if (mod(selected.s - s, CIRCUIT_LENGTH) > 60) {
+  if (mod(next.s - car.s, CIRCUIT_LENGTH) > 60) {
     target_speed = MAX_SPEED;
   } else {
-    int selected_lane = target_lane;
-    double selected_speed = MAX_SPEED;
+    double best_cost = 999999;
+    double best_lane = target_lane;
     for (int l = 0; l < N_LANES; l++) {
-      Car next = cars.nextCarInLane(s, l);
-      if (l == target_lane) {
-        if (mod(next.s - s, CIRCUIT_LENGTH) < 30) {
-          selected_speed = min(selected.speed, MAX_SPEED);
-        } else if (mod(next.s - s, CIRCUIT_LENGTH) < 10) {
-          selected_speed = min(selected.speed - 2 * MPH, MAX_SPEED);
-        }
-        continue;
-      }
-
-      if (cars.isLaneSafe(car, l, 7)) {
-        if (abs(target_lane - l) <= 1 ||
-            cars.isLaneSafe(car, target_lane > l ? l + 1 : l - 1, 7)) {
-
-          // A free lane: Go there.
-          if (mod(next.s - s, CIRCUIT_LENGTH) > 200) {
-            selected_lane = l;
-            selected = next;
-            selected_speed = MAX_SPEED;
+      double lane_cost = cars.cost(car, target_lane, l);
+      if (lane_cost < best_cost) {
+        bool safe = true;
+        for (int i = l; i != car_lane; i += (car_lane > l) ? 1 : -1) {
+          if (!cars.isLaneSafe(car, target_lane, 5, .1) ||
+              !cars.isLaneSafe(car, i, 10, .1) ||
+              !cars.isLaneSafe(car, i, 10, .5) ||
+              !cars.isLaneSafe(car, i, 10, 1) ||
+              !cars.isLaneSafe(car, l, 10, 2)) {
+            safe = false;
             break;
-
-            // A lane with a far car, take it.
-          } else if (mod(next.s - s, CIRCUIT_LENGTH) > 60) {
-            selected_lane = l;
-            selected = next;
-            selected_speed = MAX_SPEED;
-
-            // A lane with a car at medium distance, select as provisional best
-          } else if (mod(next.s - s, CIRCUIT_LENGTH) > 20 && next.s > selected.s) {
-            selected_lane = l;
-            selected = next;
-            selected_speed = MAX_SPEED;
-
-            // A lane with a close car moving faster that the current one.
-          } else if (mod(next.s - s, CIRCUIT_LENGTH) > 10 &&
-                     next.speed > selected.speed) {
-            selected_lane = l;
-            selected = next;
-            selected_speed = min(next.speed, MAX_SPEED);
           }
+        }
+        if (safe) {
+          best_cost = lane_cost;
+          best_lane = l;
         }
       }
     }
-    target_speed = selected_speed;
-    target_lane = selected_lane;
+
+    target_lane = best_lane;
+    Car next = cars.nextCarInLane(car.s, target_lane);
+
+    if (mod(next.s - car.s, CIRCUIT_LENGTH) < 10) {
+      cout << "Hard breaking on line " << target_lane << endl;
+      target_speed = next.speed - 10.;
+    } else if (mod(next.s - car.s, CIRCUIT_LENGTH) < 30) {
+      cout << "Soft breaking on line " << target_lane << endl;
+      target_speed = next.speed - 1.;
+    } else {
+      cout << "Max speed on line " << target_lane << endl;
+      target_speed = MAX_SPEED;
+    }
+
+    cout << "--------------" << endl;
   }
 }
 
@@ -169,7 +158,7 @@ tk::spline PathPlanifier::toSpline(const double target_lane, const Car &ref) {
 
   // Add control points
   for (int i = SPL_CTL_DIST; i <= SPL_LENGTH; i += SPL_CTL_DIST) {
-    Point p = toXY(ref.s + i, lane(target_lane));
+    Point p = toXY(ref.s + i, lane_to_d(target_lane));
     Point p_car = toCarCoordinates(p, ref);
     pts_x.push_back(p_car.x);
     pts_y.push_back(p_car.y);
@@ -186,16 +175,4 @@ void PathPlanifier::regulateSpeed() {
       -MAX_ACCEL, min(MAX_ACCEL, speed_control.update(target_speed - speed)));
   speed = speed + acceleration * DELTA_T;
 
-  /*
-  if (speed < target_speed) {
-    // accelerate
-    acceleration = min(acceleration + MAX_JERK * DELTA_T, MAX_ACCEL);
-    // acceleration = min(acceleration, (target_speed - speed) * acceleration);
-    speed = min(speed + acceleration * DELTA_T, target_speed);
-  } else {
-    // decelerate
-    acceleration = max(acceleration - MAX_JERK * DELTA_T, -MAX_ACCEL);
-    // acceleration = max(acceleration, (target_speed - speed) * acceleration);
-    speed = max(speed + acceleration * DELTA_T, target_speed);
-  }*/
 }

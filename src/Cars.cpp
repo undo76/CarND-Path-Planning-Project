@@ -1,17 +1,19 @@
 #include "Cars.hpp"
 #include "utils.hpp"
 #include <iostream>
+#include <iomanip>
+#include <math.h>
 
 Cars::Cars() {
   for (int i = 0; i < N_LANES; i++) {
     vector<Car> cars_in_lane;
-    cars.push_back({});
+    lanes.push_back({});
   }
 }
 
 void Cars::update(const SensorFusion sf) {
   for (int i = 0; i < N_LANES; i++) {
-    cars[i] = {};
+    lanes[i] = {};
   }
   for (int i = 0; i < sf.id.size(); i++) {
     Car car = {.id = sf.id[i],
@@ -22,7 +24,7 @@ void Cars::update(const SensorFusion sf) {
                .speed = hypo(sf.vx[i], sf.vy[i])};
     for (int l = 0; l < N_LANES; l++) {
       if (isCarInLane(car, l)) {
-        cars[l].push_back(car);
+        lanes[l].push_back(car);
       }
     }
   }
@@ -31,13 +33,13 @@ void Cars::update(const SensorFusion sf) {
 bool Cars::isCarInLane(const Car &car, int lane_n) {
   // I leave a margin of 1m. Therefore a car can be in more than a lane at
   // a time.
-  return lane(lane_n) - 3 < car.d && car.d < lane(lane_n) + 3;
+  return lane_to_d(lane_n) - 3 < car.d && car.d < lane_to_d(lane_n) + 3;
 }
 
 Car Cars::nextCarInLane(const double s, int lane_n) {
   Car next_car = {.id = -1, .s = 999999, .speed = 100};
   double min_distance = 1000;
-  for (Car c : cars[lane_n]) {
+  for (Car c : lanes[lane_n]) {
     double distance = mod(c.s - s, CIRCUIT_LENGTH);
     if (min_distance > distance) {
       next_car = c;
@@ -50,7 +52,7 @@ Car Cars::nextCarInLane(const double s, int lane_n) {
 Car Cars::previousCarInLane(const double s, int lane_n) {
   Car next_car = {.id = -1, .s = 999999, .speed = 100};
   double min_distance = 1000;
-  for (Car c : cars[lane_n]) {
+  for (Car c : lanes[lane_n]) {
     double distance = mod(s - c.s, CIRCUIT_LENGTH);
     if (min_distance > distance) {
       next_car = c;
@@ -60,22 +62,35 @@ Car Cars::previousCarInLane(const double s, int lane_n) {
   return next_car;
 }
 
-bool Cars::isLaneSafe(const Car car, int lane_n, double margin) {
+bool Cars::isLaneSafe(const Car car, const int lane_n, const double margin,
+                      const double time) {
   Car next_car = nextCarInLane(car.s, lane_n);
   Car previous_car = previousCarInLane(car.s, lane_n);
 
-  const double t = 1.5; // seconds
-
   return (next_car.id == -1 ||
-          (future_s(next_car, .01) - future_s(car, .01) > margin)) &&
+          (future_s(next_car, time) - future_s(car, time) > margin)) &&
          (previous_car.id == -1 ||
-          (future_s(car, .01) - future_s(previous_car, .01) > margin)) &&
-         (next_car.id == -1 ||
-          (future_s(next_car, t) - future_s(car, t) > margin)) &&
-         (previous_car.id == -1 ||
-          (future_s(car, t) - future_s(previous_car, t) > margin));
+          (future_s(car, time) - future_s(previous_car, time) > margin));
 }
 
 double Cars::future_s(const Car car, const double time) {
   return car.s + car.speed * time;
+}
+
+double Cars::cost(const Car car, int target_lane, int lane_n) {
+  Car next_car = nextCarInLane(car.s, lane_n);
+  Car previous_car = previousCarInLane(car.s, lane_n);
+
+  double speed_cost = max(MAX_SPEED - next_car.speed, 0.);
+  double distance_cost = 300 * 1 / (next_car.s - car.s);
+  double change_cost = abs(target_lane - lane_n) * 3;
+
+  double total = speed_cost + distance_cost + change_cost;
+
+  cout << fixed << setprecision(2);
+  cout << lane_n << ":\t" << speed_cost << "\t" << distance_cost << "\t"
+       << change_cost << "\t" 
+       << " = " << total << "\t"
+       << endl;
+  return total; 
 }

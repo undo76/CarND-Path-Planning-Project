@@ -14,11 +14,13 @@ public:
 
   void update(const SensorFusion sensor_fusion);
   bool isCarInLane(const Car &car, int lane_n);
-  Car nextCarInLane(const double s, int lane_n);
-  Car previousCarInLane(const double s, int lane_n);
-  bool isLaneSafe(const Car car, int lane_n, double margin);
+  Car nextCarInLane(double s, int lane_n);
+  Car previousCarInLane( double s, int lane_n);
+  bool isLaneSafe(const Car car, int lane_n, double margin, double time);
+  double cost(const Car car, int target_lane, int lane_n);
+  
 
 private:
-  vector<vector<Car>> cars;
+  vector<vector<Car>> lanes;
   double future_s(const Car car, const double time);
 };

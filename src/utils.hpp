@@ -12,7 +12,8 @@ double rad2deg(double x);
 
 double distance(double x1, double y1, double x2, double y2);
 double hypo(double x, double y);
-double lane(const int n);
+double lane_to_d(const int n);
+double d_to_lane(const double d);
 double mod(double x, double mod);
 
 

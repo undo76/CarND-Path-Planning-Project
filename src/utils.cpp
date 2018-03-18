@@ -18,7 +18,8 @@ double distance(double x1, double y1, double x2, double y2) {
 
 double mod(double x, double mod) { return (x >= 0) ? (x > mod ? x - mod : x) : x + mod; }
 
-double lane(const int n) { return 2 + 4 * n; }
+double lane_to_d(const int n) { return 2. + 4. * n; }
+int d_to_lane(const double d) { return round((d - 2.) / 4.); }
 
 int ClosestWaypoint(double x, double y, const vector<double> &maps_x,
                     const vector<double> &maps_y) {
@@ -131,6 +132,5 @@ Point getXY(double s, double d, const vector<double> &maps_s,
 
   double x = seg_x + d * cos(perp_heading);
   double y = seg_y + d * sin(perp_heading);
-  cout << s << " " << x << " " << y << " " << endl;
   return {x, y};
 }
