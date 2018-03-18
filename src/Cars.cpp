@@ -86,7 +86,7 @@ double Cars::cost(const Car car, int target_lane, int lane_n) {
 
   double speed_cost = max(MAX_SPEED - next_car.speed, 0.);
   double distance_cost = 100 * 1 / (next_car.s - car.s);
-  double change_cost = max((double)abs(target_lane - lane_n), 1.5);
+  double change_cost = min((double)abs(target_lane - lane_n), 1.5);
 
   double total = speed_cost + distance_cost + change_cost;
 
