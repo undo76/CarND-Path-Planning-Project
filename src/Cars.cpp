@@ -1,7 +1,7 @@
 #include "Cars.hpp"
 #include "utils.hpp"
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <math.h>
 
 Cars::Cars() {
@@ -21,6 +21,7 @@ void Cars::update(const SensorFusion sf) {
                .y = sf.y[i],
                .s = sf.s[i],
                .d = sf.d[i],
+               .yaw = 0,
                .speed = hypo(sf.vx[i], sf.vy[i])};
     for (int l = 0; l < N_LANES; l++) {
       if (isCarInLane(car, l)) {
@@ -37,7 +38,8 @@ bool Cars::isCarInLane(const Car &car, int lane_n) {
 }
 
 Car Cars::nextCarInLane(const double s, int lane_n) {
-  Car next_car = {.id = -1, .s = 999999, .speed = 100};
+  Car next_car = {
+      .id = -1, .x = 0, .y = 0, .s = 999999, .d = 0., .yaw = 0., .speed = 100};
   double min_distance = 1000;
   for (Car c : lanes[lane_n]) {
     double distance = mod(c.s - s, CIRCUIT_LENGTH);
@@ -50,7 +52,8 @@ Car Cars::nextCarInLane(const double s, int lane_n) {
 }
 
 Car Cars::previousCarInLane(const double s, int lane_n) {
-  Car next_car = {.id = -1, .s = 999999, .speed = 100};
+  Car next_car = {
+      .id = -1, .x = 0, .y = 0, .s = 999999, .d = 0., .yaw = 0., .speed = 100};
   double min_distance = 1000;
   for (Car c : lanes[lane_n]) {
     double distance = mod(s - c.s, CIRCUIT_LENGTH);
@@ -83,14 +86,13 @@ double Cars::cost(const Car car, int target_lane, int lane_n) {
 
   double speed_cost = max(MAX_SPEED - next_car.speed, 0.);
   double distance_cost = 100 * 1 / (next_car.s - car.s);
-  double change_cost = abs(target_lane - lane_n);
+  double change_cost = max((double)abs(target_lane - lane_n), 1.5);
 
   double total = speed_cost + distance_cost + change_cost;
 
   cout << fixed << setprecision(2);
   cout << lane_n << ":\t" << speed_cost << "\t" << distance_cost << "\t"
-       << change_cost << "\t" 
-       << " = " << total << "\t"
-       << endl;
-  return total; 
+       << change_cost << "\t"
+       << " = " << total << "\t" << endl;
+  return total;
 }

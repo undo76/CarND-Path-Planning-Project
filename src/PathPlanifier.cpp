@@ -26,7 +26,7 @@ void PathPlanifier::selectLaneAndSpeed() {
   Car next = cars.nextCarInLane(car.s, car_lane);
 
   // If the car in front is far, continue at full speed
-  if (mod(next.s - car.s, CIRCUIT_LENGTH) > 80) {
+  if (mod(next.s - car.s, CIRCUIT_LENGTH) > 100) {
     target_speed = MAX_SPEED;
   } else {
     double best_cost = 999999;
