@@ -36,11 +36,11 @@ void PathPlanifier::selectLaneAndSpeed() {
       if (lane_cost < best_cost) {
         bool safe = true;
         for (int i = l; i != car_lane; i += (car_lane > l) ? 1 : -1) {
-          if (!cars.isLaneSafe(car, target_lane, 5, .1) ||
+          if (!cars.isLaneSafe(car, i, 5, .1) ||
               !cars.isLaneSafe(car, i, 10, .1) ||
               !cars.isLaneSafe(car, i, 10, .5) ||
               !cars.isLaneSafe(car, i, 10, 1) ||
-              !cars.isLaneSafe(car, l, 10, 2)) {
+              !cars.isLaneSafe(car, i, 10, 2)) {
             safe = false;
             break;
           }

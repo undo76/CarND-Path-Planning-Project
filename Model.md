@@ -28,7 +28,7 @@ The parameters of the PID are:
   </tr>
 </table>
 
-## Path plannifier
+## Lane plannifier
 
 If the car before the ego car is far away we keep the lane at maximum speed. Otherwise we need to select the most promising lane, i.e. the one that allows to advance faster.
 
@@ -68,3 +68,12 @@ We only select a lane if the distance with other cars is rescpected for differen
 
 In order to select the final speed, we only take into account the speed and the distance of the next car in the selected lane. If the car is far away, we select maximum speed. Otherwise, we will reduce speed with regard to the next car.
 
+## Trajectory generation
+
+Given a target lane and a target speed we need to generate a smooth transition respecting the limits.
+
+In order to do so, we generate a spline tangent to the previous path (or the position of the car if there is none), that passes through several waypoints spacecd regularly. 
+
+## Things to improve
+
+The path plannifier follows a greedy strategy that in some cases is not optimal. Sometimes is better to select a slower lane or to break in order to be in a position that allows to change to a better lane later.
