@@ -59,7 +59,7 @@ void PathPlanifier::selectLaneAndSpeed() {
     if (mod(next.s - car.s, CIRCUIT_LENGTH) < 10) {
       cout << "Hard breaking on lane " << target_lane << endl;
       target_speed = next.speed - 10.;
-    } else if (mod(next.s - car.s, CIRCUIT_LENGTH) < 40) {
+    } else if (mod(next.s - car.s, CIRCUIT_LENGTH) < 20) {
       cout << "Soft breaking on lane " << target_lane << endl;
       target_speed = next.speed - 2.;
     } else {
