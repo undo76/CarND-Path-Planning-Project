@@ -61,8 +61,8 @@ void PathPlanifier::selectLaneAndSpeed() {
       target_speed = next.speed - 10.;
     } else if (mod(next.s - car.s, CIRCUIT_LENGTH) < 30) {
       cout << "Soft breaking on lane " << target_lane << endl;
-      target_speed = next.speed - 3.;
-    } else {
+      target_speed = next.speed - 2.;
+    } else if (mod(next.s - car.s, CIRCUIT_LENGTH) > 50) {
       cout << "Max speed on lane " << target_lane << endl;
       target_speed = MAX_SPEED;
     }
